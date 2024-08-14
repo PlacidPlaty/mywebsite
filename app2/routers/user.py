@@ -3,9 +3,18 @@ from .. import models, schemas, utils # imports models.py, schemas.py, utils.py 
 from sqlalchemy.orm import Session
 from ..database import engine, get_db
 
-router = APIRouter()
+router = APIRouter(
 
-@router.post("/users", status_code = status.HTTP_201_CREATED, response_model = schemas.UserOut)
+    # saying that every URL in this python file starts with /users
+    # now you can just replace the path with "/" instead of "/users" 
+    # /users/{id} will look like /{id}
+    prefix = "/users", # dont forget the comma
+    # this tags your route operators for fastapi's documentation. 
+    # Notice that it is a list, meaning you can add multple tags
+    tags = ["Users"]
+)
+
+@router.post("/", status_code = status.HTTP_201_CREATED, response_model = schemas.UserOut)
 def create_user(user : schemas.UserCreate, db: Session = Depends(get_db)):
 
     # hash the password - user.password using the hash function in utils.py 
@@ -21,7 +30,7 @@ def create_user(user : schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 # find one user
-@router.get("/users/{id}", response_model = schemas.UserOut)
+@router.get("/{id}", response_model = schemas.UserOut)
 def get_user(id : int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
     

@@ -5,13 +5,18 @@ from typing import List
 from ..database import engine, get_db
 
 router = APIRouter(
-    # saying that every URL in this 
-    prefix = "/post"
+    # saying that every URL in this python file starts with /post
+    # now you can just replace the path with "/" instead of "/post"
+    # /post/{id} will look like /{id}
+    prefix = "/posts", # dont forget the comma
+    # this tags your route operators for fastapi's documentation. 
+    # Notice that it is a list, meaning you can add multple tags
+    tags = ["Posts"]
 )
 
 # the response is expecting specific columns but the db.query is returning all columns.
 # changing it to List[] helps make them compatible. 
-@router.get("/posts", response_model= List[schemas.Post])
+@router.get("/", response_model= List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
@@ -22,7 +27,7 @@ returns a HTTP 201 when successful
 and response_model sends back data to the user based on the schema you specify.
 response_model allows you to restrict the data you are sending back to the user.
 '''
-@router.post("/posts", status_code= status.HTTP_201_CREATED, response_model= schemas.Post)
+@router.post("/", status_code= status.HTTP_201_CREATED, response_model= schemas.Post)
 def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db)): # reference the Post pydantic model
 
 # pass the data from post (argument) into new_post. Below is an ineffective way to get the input.
@@ -37,7 +42,7 @@ def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db)): # re
     return new_post
 
 # retrieve one individual post
-@router.get("/posts/{id}", response_model = schemas.Post)
+@router.get("/{id}", response_model = schemas.Post)
 def get_post(id : int, db: Session = Depends(get_db)): 
     # id : int validates if input can be converted into int, then auto converts into int
     # After data validation, pass the data from id into %s. Need to type cast into string first
@@ -54,7 +59,7 @@ def get_post(id : int, db: Session = Depends(get_db)):
 
 # Status code of 204 indicate that a HTTP request has been successfully completed, 
 # and there is no message body
-@router.delete("/posts/{id}")
+@router.delete("/{id}")
 def delete_post(id : int, db: Session = Depends(get_db)):
     # similar to getting one post
     post = db.query(models.Post).filter(models.Post.id == id)
@@ -69,7 +74,7 @@ def delete_post(id : int, db: Session = Depends(get_db)):
 
     return Response(status_code= status.HTTP_204_NO_CONTENT)
 
-@router.put("/posts/{id}", response_model= schemas.Post)
+@router.put("/{id}", response_model= schemas.Post)
 def update_post(id : int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # query to find the specific post
     post_query = db.query(models.Post).filter(models.Post.id == id)
