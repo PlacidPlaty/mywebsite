@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
 
 # create a schema with pydantic
 # this class extends BaseModel and other classes will extend it
@@ -42,3 +43,16 @@ class UserOut(BaseModel):
 # This can produce errors if you use it with ORMs like SQLalchemy writing the code below can make it accept non dictionary formats
     class Config:
         orm_mode = True
+
+
+class UserLogin(BaseModel):
+    email : EmailStr
+    password : str
+
+# for returning of JWT Token to users
+class Token(BaseModel):
+    access_token : str
+    token_type : str
+# Data needed to create a token
+class TokenData(BaseModel):
+    id : Optional[str] = None

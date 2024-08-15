@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
-from .. import models, schemas # imports models.py, schemas.py, utils.py etc...
+from .. import models, schemas, oauth2 # imports models.py, schemas.py, utils.py etc...
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import engine, get_db
@@ -23,12 +23,14 @@ def get_posts(db: Session = Depends(get_db)):
 
 '''
 data type for a post-> title: str, content str
-returns a HTTP 201 when successful 
-and response_model sends back data to the user based on the schema you specify.
+Response_model sends back data to the user based on the schema you specify.
 response_model allows you to restrict the data you are sending back to the user.
+oauth2.get_current_user checks that user have the correct JWT token and credential to access the API endpoint
+
 '''
 @router.post("/", status_code= status.HTTP_201_CREATED, response_model= schemas.Post)
-def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db)): # reference the Post pydantic model
+def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db), 
+                 get_current_user: int = Depends(oauth2.get_current_user)): 
 
 # pass the data from post (argument) into new_post. Below is an ineffective way to get the input.
     # new_post = models.Post(title= post.title, content = post.content, published = post.published)
