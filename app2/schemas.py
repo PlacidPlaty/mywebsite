@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from datetime import datetime
 from typing import Optional
 
@@ -55,4 +55,12 @@ class Token(BaseModel):
     token_type : str
 # Data needed to create a token
 class TokenData(BaseModel):
+    '''
+    newer version of pydantic does not allow parsing of int to str
+    since id is an int while below id is declared as str, 
+    an error will occur when trying trying to authenticate with JWT token
+    model_config = ConfigDict(coerce_numbers_to_str=True) helps with the issue
+    '''
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     id : Optional[str] = None

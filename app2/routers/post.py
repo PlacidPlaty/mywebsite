@@ -26,11 +26,11 @@ data type for a post-> title: str, content str
 Response_model sends back data to the user based on the schema you specify.
 response_model allows you to restrict the data you are sending back to the user.
 oauth2.get_current_user checks that user have the correct JWT token and credential to access the API endpoint
-
+at the same time Depends(oauth2.get_current_user) also returns the user stated in the JWT token.
 '''
 @router.post("/", status_code= status.HTTP_201_CREATED, response_model= schemas.Post)
 def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db), 
-                 get_current_user: int = Depends(oauth2.get_current_user)): 
+                 current_user: int = Depends(oauth2.get_current_user)): 
 
 # pass the data from post (argument) into new_post. Below is an ineffective way to get the input.
     # new_post = models.Post(title= post.title, content = post.content, published = post.published)
@@ -41,6 +41,7 @@ def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db),
     db.commit() # commit to database
     db.refresh(new_post) # retreive the new_post. (Eqivalent to getting the output from SQL RETURNING keyword)
 
+    print(current_user.email)
     return new_post
 
 # retrieve one individual post
@@ -62,7 +63,7 @@ def get_post(id : int, db: Session = Depends(get_db)):
 # Status code of 204 indicate that a HTTP request has been successfully completed, 
 # and there is no message body
 @router.delete("/{id}")
-def delete_post(id : int, db: Session = Depends(get_db)):
+def delete_post(id : int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # similar to getting one post
     post = db.query(models.Post).filter(models.Post.id == id)
 
@@ -77,7 +78,8 @@ def delete_post(id : int, db: Session = Depends(get_db)):
     return Response(status_code= status.HTTP_204_NO_CONTENT)
 
 @router.put("/{id}", response_model= schemas.Post)
-def update_post(id : int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def update_post(id : int, updated_post: schemas.PostCreate, db: Session = Depends(get_db),
+                current_user: int = Depends(oauth2.get_current_user)):
     # query to find the specific post
     post_query = db.query(models.Post).filter(models.Post.id == id)
     # grab the post if it exists

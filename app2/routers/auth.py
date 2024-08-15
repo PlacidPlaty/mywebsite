@@ -8,13 +8,14 @@ router = APIRouter(
     tags = ["Authentication"]
 )
 
-@router.post("/login")
+@router.post("/login", response_model= schemas.Token)
 # use fastapi's OAuth2PasswordRequestForm
 def login(user_credentials: OAuth2PasswordRequestForm = Depends(), 
           db: Session = Depends(database.get_db)):
 # OAuth2PasswordRequestForm stores the user's login input as "username" and "password"
 # in this case the email is stored as a field called username in user_credential.
     # .first() gets the first instance of the user where email matches
+
     user = db.query(models.User).filter(models.User.email == user_credentials.username).first()
 
     if not user:
