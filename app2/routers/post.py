@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from .. import models, schemas, oauth2 # imports models.py, schemas.py, utils.py etc...
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from ..database import engine, get_db
 
 router = APIRouter(
@@ -16,9 +16,16 @@ router = APIRouter(
 
 # the response is expecting specific columns but the db.query is returning all columns.
 # changing it to List[] helps make them compatible. 
+# limit allows users to limit how many posts to return while skip allows users to skip over however many posts
+# Default number for limit and skip can be set in function parameter
+# Search parameter is optional. Keyword does not have to exactly match the post title.
+# eg in the url: /posts&limit=3&skip=2
+# eg in the url: /post&search=guide%20tours "%20" is space in HEXA ASCII
 @router.get("/", response_model= List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
+def get_posts(db: Session = Depends(get_db), limit : int = 10, skip : int = 0, search: Optional[str] = ""):
+    # print(limit)
+    # print(skip)
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 '''
@@ -36,7 +43,8 @@ def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db),
     # new_post = models.Post(title= post.title, content = post.content, published = post.published)
 
 # instead use python dictionary and unpack it with '**'. Below code does the same thing as above
-    new_post = models.Post(**post.model_dump()) # convert post to a dictionary and unpack it with **
+    new_post = models.Post(owner_id = current_user.id, # add owner_id to the new_post
+                           **post.model_dump()) # convert post to a dictionary and unpack it with **
     db.add(new_post) # add new post to database
     db.commit() # commit to database
     db.refresh(new_post) # retreive the new_post. (Eqivalent to getting the output from SQL RETURNING keyword)
@@ -64,15 +72,21 @@ def get_post(id : int, db: Session = Depends(get_db)):
 # and there is no message body
 @router.delete("/{id}")
 def delete_post(id : int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    # similar to getting one post
-    post = db.query(models.Post).filter(models.Post.id == id)
+    # similar to getting one post. Query for the post
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    # get the post from the query
+    post = post_query.first()
 
     # If post is not found
-    if post.first() == None:
+    if post == None:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, 
                             detail= f"post with id: {id} does not exist")
+    # If user tries to delete posts that are not theirs by checking from current_user = Depends(oauth2.get_current_user)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code= status.HTTP_403_FORBIDDEN,
+                            detail = f"Not authorised to perform requested action")
     # If post is found, delete it
-    post.delete(synchronize_session = False)
+    post_query.delete(synchronize_session = False)
     db.commit()
 
     return Response(status_code= status.HTTP_204_NO_CONTENT)
@@ -82,13 +96,18 @@ def update_post(id : int, updated_post: schemas.PostCreate, db: Session = Depend
                 current_user: int = Depends(oauth2.get_current_user)):
     # query to find the specific post
     post_query = db.query(models.Post).filter(models.Post.id == id)
-    # grab the post if it exists
+    # grab the post from the query
     post = post_query.first()
 
     # If post id is not found
     if post == None:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, 
                             detail= f"post with id: {id} does not exist")
+    
+    # If user tries to update posts that are not theirs by checking from current_user = Depends(oauth2.get_current_user)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code= status.HTTP_403_FORBIDDEN,
+                            detail = f"Not authorised to perform requested action")
     
     # If post exists
     post_query.update(updated_post.model_dump(), synchronize_session = False)
