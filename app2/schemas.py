@@ -1,6 +1,7 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import datetime
 from typing import Optional
+from pydantic.types import conint #to validate int is within a certain range
 
 ####################################################
 
@@ -72,3 +73,11 @@ class TokenData(BaseModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
     id : Optional[str] = None
+
+
+# For vote
+class Vote(BaseModel):
+    post_id: int
+    # either 0 or 1
+    dir: int = Field(le = 1) # try using Field first as conint gets an error
+    # dir: conint(le=1)

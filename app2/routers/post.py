@@ -20,7 +20,7 @@ router = APIRouter(
 # Default number for limit and skip can be set in function parameter
 # Search parameter is optional. Keyword does not have to exactly match the post title.
 # eg in the url: /posts&limit=3&skip=2
-# eg in the url: /post&search=guide%20tours "%20" is space in HEXA ASCII
+# eg in the url: /post&search=guide%20tours   "%20" is space in HEXA ASCII
 @router.get("/", response_model= List[schemas.Post])
 def get_posts(db: Session = Depends(get_db), limit : int = 10, skip : int = 0, search: Optional[str] = ""):
     # print(limit)

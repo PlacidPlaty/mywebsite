@@ -30,3 +30,11 @@ class User(Base):
     email = Column(String, nullable = False, unique = True) # All emails are unique to prevent multiple accounts with the same email
     password = Column(String, nullable = False)
     created_at = Column(TIMESTAMP(timezone = True), nullable = False, server_default=text('now()')) 
+
+
+# Table to track use vote for each post
+class Vote(Base):
+    __tablename__ = "votes"
+    # for foreign key reference the table name and NOT the class name
+    user_id = Column(Integer, ForeignKey("users.id", ondelete= "CASCADE"), primary_key = True)
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete= "CASCADE"), primary_key = True)

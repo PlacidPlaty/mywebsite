@@ -5,8 +5,13 @@ from sqlalchemy.orm import sessionmaker
 import time
 import psycopg2
 from psycopg2.extras import RealDictCursor # to include column names in your SQL query
+from .config import settings
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:rootuser@localhost/mywebsite"
+# <username>:<password>@<hostname:ip address>/<database_name to connect to>
+# use the variables stated in .env file which is retrieved from config.py
+SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}"
+
+
 
 # engine is responsible for SQLAlchemy to connect to postgres DB
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
