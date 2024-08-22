@@ -78,6 +78,6 @@ class TokenData(BaseModel):
 # For vote
 class Vote(BaseModel):
     post_id: int
-    # either 0 or 1
-    dir: int = Field(le = 1) # try using Field first as conint gets an error
-    # dir: conint(le=1)
+    # either 0 or 1. 1 likes the post, 0 is no vote
+    dir: int = Field(ge=0, le = 1) # try using Field first as conint gets an error
+    # dir: conint(le=1) # shown in video but gives an error
