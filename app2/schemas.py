@@ -56,6 +56,14 @@ class Post(PostBase):
     class Config:
         orm_mode = True
 
+# to deal with the left outer join query in get_post
+class PostOut(BaseModel):
+    Post: Post # Set it to return the Post schema
+    votes: int
+
+    class Config:
+        orm_mode = True
+
 ####################################################
 
 # for returning of JWT Token to users

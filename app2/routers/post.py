@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from .. import models, schemas, oauth2 # imports models.py, schemas.py, utils.py etc...
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from ..database import engine, get_db
 
@@ -21,11 +22,19 @@ router = APIRouter(
 # Search parameter is optional. Keyword does not have to exactly match the post title.
 # eg in the url: /posts&limit=3&skip=2
 # eg in the url: /post&search=guide%20tours   "%20" is space in HEXA ASCII
-@router.get("/", response_model= List[schemas.Post])
+@router.get("/", response_model= List[schemas.PostOut])
 def get_posts(db: Session = Depends(get_db), limit : int = 10, skip : int = 0, search: Optional[str] = ""):
-    # print(limit)
-    # print(skip)
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    
+    # keep here for documentation
+    # posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+
+#query the database for posts and include votes from users
+    # by default, SQLalchemy does inner join. isouter = True changes it to outer join
+    # label changes the column name
+    # copy the .filter() stuff over from post = db.query(models.Post).....
+    posts = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, 
+                                         isouter = True).group_by(models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    # print(results)
     return posts
 
 '''
@@ -53,13 +62,17 @@ def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db),
     return new_post
 
 # retrieve one individual post
-@router.get("/{id}", response_model = schemas.Post)
+@router.get("/{id}", response_model = schemas.PostOut)
 def get_post(id : int, db: Session = Depends(get_db)): 
     # id : int validates if input can be converted into int, then auto converts into int
     # After data validation, pass the data from id into %s. Need to type cast into string first
                     # filter is like running the WHERE keyword in SQL
                     # .first() finds the first instance of the data and returns it
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    # post = db.query(models.Post).filter(models.Post.id == id).first()
+
+# query the database for the specific post and the votes for it
+    post = results = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, 
+                                         isouter = True).group_by(models.Post.id).filter(models.Post.id == id).first()
 
     # If database did not find a post, post will be set to None
     if not post:
