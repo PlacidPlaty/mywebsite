@@ -6,6 +6,7 @@ import time
 import psycopg2
 from psycopg2.extras import RealDictCursor # to include column names in your SQL query
 from .config import settings
+# testing for venv deletion
 
 # <username>:<password>@<hostname:ip address>/<database_name to connect to>
 # use the variables stated in .env file which is retrieved from config.py
